@@ -9,9 +9,9 @@ class Node:
         self.formula = ''
         self.left_child = None
         self.right_child = None
-        self.automata = None
-        self.variables = None
-        self.coeff = None
+        self.automata = None               #Stores the Transition Table
+        self.variables = None              #Stores which variables are present in this formula
+        self.coeff = None                  #Stores coefficients of variables
 
     def set_formula(self, formula):
         self.formula = formula
@@ -22,19 +22,24 @@ class Node:
     def set_right_child(self, right):
         self.right_child = right
 
-    def post_order_traversal(self, root):
+    def post_order_traversal(self, root):                  
         if root == None:
             return 
         self.post_order_traversal(root.left_child)
         self.post_order_traversal(root.right_child)
+
+        print()
         print(root.formula)
+        print()
+
         if root.left_child == None and root.right_child == None:
             root.automata, root.variables, root.coeff = construct_automata(root.formula)
         elif root.formula == 'Not' and root.left_child != None and root.right_child == None:     
             root.variables = root.left_child.variables[:]
-            root.coeff = root.left_child.coeff
+            root.coeff = root.left_child.coeff[:]
 
             root.automata = complement_automata(root.left_child.automata, root.variables)
+
         elif root.formula == 'And' and root.left_child != None and root.right_child != None:
             root.variables = root.left_child.variables[:]
             root.coeff = root.left_child.coeff[:]
@@ -75,14 +80,11 @@ def print_automata(automata, number_of_input):
     print(x)
 
 def union_automata(table1, table2, var1, var2, cur_var, coeff):
-
-    print(var1)
     
     states1 = [i for i in table1]
     states2 = [i for i in table2]
 
     automata = {}
-    visited = []
 
     position_of_input_1 = []
     position_of_input_2 = []
@@ -95,12 +97,8 @@ def union_automata(table1, table2, var1, var2, cur_var, coeff):
             position_of_input_1.append(num_of_input-1)
         if var2[i] == 1:
             position_of_input_2.append(num_of_input-1)
-    
-    print(position_of_input_1,position_of_input_2, var1, var2, cur_var)
 
     for states in product(states1, states2):
-        if 'D' in states[0] and 'D' in states[1]:
-            continue
         if 'I' in states[0] and 'I' in states[1]:
             init = 'I'
         else:
@@ -165,22 +163,16 @@ def union_automata(table1, table2, var1, var2, cur_var, coeff):
             trans3 = '<' + transition1 + ',' + transition2 + '>'
             automata[cur_state3]["".join(input)] = trans3
 
-
-    #print(automata)
-
     print_automata(automata, num_of_input)
     return automata
 
 
 def intersect_automata(table1, table2, var1, var2, cur_var, coeff):
-
-    print(var1)
     
     states1 = [i for i in table1]
     states2 = [i for i in table2]
 
     automata = {}
-    visited = []
 
     position_of_input_1 = []
     position_of_input_2 = []
@@ -193,12 +185,8 @@ def intersect_automata(table1, table2, var1, var2, cur_var, coeff):
             position_of_input_1.append(num_of_input-1)
         if var2[i] == 1:
             position_of_input_2.append(num_of_input-1)
-    
-    print(position_of_input_1,position_of_input_2, var1, var2, cur_var)
 
     for states in product(states1, states2):
-        if 'D' in states[0] and 'D' in states[1]:
-            continue
         if 'I' in states[0] and 'I' in states[1]:
             init = 'I'
         else:
@@ -263,9 +251,6 @@ def intersect_automata(table1, table2, var1, var2, cur_var, coeff):
             trans3 = '<' + transition1 + ',' + transition2 + '>'
             automata[cur_state3]["".join(input)] = trans3
 
-
-    #print(automata)
-
     print_automata(automata, num_of_input)
     return automata
 
@@ -298,8 +283,6 @@ def automata_for_equal(coeff):
         if i != 0:
             weights.append(i)
     
-    print(weights)
-    
     number_of_input = len(weights)
 
     transition_table = {}
@@ -329,19 +312,9 @@ def automata_for_equal(coeff):
                 if c not in transition_table:
                     states.append(c)
             else:
-                transition_table[states[i]]["".join(map(str,input))] = 'D' 
+                transition_table[states[i]]["".join(map(str,input))] = 'Err' 
         i+= 1
         n = len(states)
-    #print(transition_table)
-
-    x = PrettyTable()
-
-    header = [""]
-    perm = product([0,1], repeat=number_of_input-1)
-    for input in perm:
-        header.append("".join(map(str,input)))
-    
-    x.field_names = header
 
     automata = {}
 
@@ -356,21 +329,16 @@ def automata_for_equal(coeff):
             row = [str(i[0])]
             if i[0] == 0:
                 row[0] = row[0] + 'F'
-        for j in i[1].items():
-            row.append(j[1])
-        x.add_row(row)
         automata[row[0]] = i[1] 
-    error_state = ['D']*(2**(number_of_input-1) + 1)
 
-    automata['D'] = {}
+    automata['Err'] = {}
     perm = product([0,1], repeat=number_of_input-1)
     for input in perm:
-        automata['D']["".join(map(str,input))] = 'D'
-    x.add_row(error_state)
+        automata['Err']["".join(map(str,input))] = 'Err'
 
-    #print(x)
+    print_automata(automata, number_of_input-1)
 
-    return automata, x
+    return automata
 
 def automata_for_less_than_equal(coeff, type):
     start_state = [coeff[0]]
@@ -381,8 +349,6 @@ def automata_for_less_than_equal(coeff, type):
     for i in coeff:
         if i != 0:
             weights.append(i)
-    
-    print(weights)
     
     number_of_input = len(weights)
 
@@ -413,16 +379,6 @@ def automata_for_less_than_equal(coeff, type):
                 states.append(c)
         i+= 1
         n = len(states)
-    #print(transition_table)
-
-    x = PrettyTable()
-
-    header = [""]
-    perm = product([0,1], repeat=number_of_input-1)
-    for input in perm:
-        header.append("".join(map(str,input)))
-    
-    x.field_names = header
 
     automata = {}
     initial = 0
@@ -440,14 +396,11 @@ def automata_for_less_than_equal(coeff, type):
                 row[0] = row[0] + 'F'
             elif type == 1 and i[0] < 0:
                 row[0] = row[0] + 'F'
-        for j in i[1].items():
-            row.append(j[1])
-        x.add_row(row)
         automata[row[0]] = i[1] 
 
-    #print(x)
+    print_automata(automata, number_of_input-1)
 
-    return automata, x
+    return automata
 
 def automata_for_less_than(coeff, type):
     start_state = [coeff[0]]
@@ -458,8 +411,6 @@ def automata_for_less_than(coeff, type):
     for i in coeff:
         if i != 0:
             weights.append(i)
-    
-    print(weights)
     
     number_of_input = len(weights)
 
@@ -490,17 +441,9 @@ def automata_for_less_than(coeff, type):
                 states.append(c)
         i+= 1
         n = len(states)
-    #print(transition_table)
 
-    x = PrettyTable()
-
-    header = [""]
-    perm = product([0,1], repeat=number_of_input-1)
-    for input in perm:
-        header.append("".join(map(str,input)))
-    
     automata = {}
-    x.field_names = header
+
     initial = 0
     for i in transition_table.items():
         if initial == 0:
@@ -516,14 +459,11 @@ def automata_for_less_than(coeff, type):
                 row[0] = row[0] + 'F'
             elif type == 1 and i[0] <= 0:
                 row[0] = row[0] + 'F'
-        for j in i[1].items():
-            row.append(j[1])
-        x.add_row(row)
         automata[row[0]] = i[1] 
 
-    #print(x)
+    print_automata(automata, number_of_input-1)
 
-    return automata, x
+    return automata
 
 def construct_automata(form):
     relation = ''
@@ -559,7 +499,7 @@ def construct_automata(form):
             break
     
     coeff = [0]*(number_of_variables+1)
-    variable = [0]*(number_of_variables+1) # n = number of var
+    variable = [0]*(number_of_variables+1)   # n = Number of variables
 
     a = form[0:r1+1].split('+')
     for i in a:
@@ -576,7 +516,6 @@ def construct_automata(form):
                 var = int(i[1:])
                 coeff[var] += 1
                 variable[var] = 1
-    print(relation, coeff, variable)
 
     a = form[l2:].split('+')
     for i in a:
@@ -593,25 +532,19 @@ def construct_automata(form):
                 var = int(i[1:])
                 coeff[var] -= 1
                 variable[var] = 1
-    print(relation, coeff, variable)
 
     if relation == 1:
-        automata, table = automata_for_equal(coeff)
+        automata = automata_for_equal(coeff)
     elif relation == 2:
-        automata, table = automata_for_less_than_equal(coeff, 0)
+        automata = automata_for_less_than_equal(coeff, 0)
     elif relation == 5:
-        automata, table = automata_for_less_than_equal(coeff, 1)
+        automata = automata_for_less_than_equal(coeff, 1)
     elif relation == 3:
-        automata, table = automata_for_less_than(coeff, 0)
+        automata = automata_for_less_than(coeff, 0)
     else:
-        automata, table = automata_for_less_than(coeff, 1)
-
-    print(form, automata)
-    print(table)
+        automata = automata_for_less_than(coeff, 1)
 
     return automata, variable, coeff
-
-        
 
 
 def parse_input(input, root):
@@ -623,60 +556,49 @@ def parse_input(input, root):
     if input[0] == 'A' and input[:3] == 'And':
         d = 1
         root.set_formula('And')
-        print(root.formula)
 
         left_child = Node()
         root.set_left_child(left_child)
 
         right_start = parse_input(input[4:], left_child)
-        print(d, 'r', right_start)
         right_child = Node()
         root.set_right_child(right_child)
         input_ends = parse_input(input[right_start+4:], right_child)
-        print(d, input_ends)
         return input_ends + right_start + 4
     elif input[0] == 'O' and input[:2] == 'Or':
         d = 2
         root.set_formula('Or')
-        print(root.formula)
 
         left_child = Node()
         root.set_left_child(left_child)
 
         right_start = parse_input(input[3:], left_child)
-        print(d, 'r', right_start)
         right_child = Node()
         root.set_right_child(right_child)
         input_ends = parse_input(input[right_start+3:], right_child)
-        print(d, input_ends)
         
         return input_ends + right_start + 3
     elif input[0] == 'N' and input[:3] == 'Not':
         d = 3
         root.set_formula('Not')
-        print(root.formula)
 
         left_child = Node()
         root.set_left_child(left_child)
 
         right_start = parse_input(input[4:], left_child)
-        print(d, 'r', right_start)
         return right_start + 4
     else:
         l = 0
         for i in range(n):
             if input[i] == ',':
                 root.set_formula(input[l:i])
-                print(root.formula)
                 return i+1
             elif input[i] == ')':
                 root.set_formula(input[l:i])
-                print(root.formula)
                 if i == n-1:
                     return i + 1
                 return i + 2
         root.set_formula(input[l:])
-        print(root.formula)
         return n
 
 def decider(automata, inputs):
@@ -688,21 +610,21 @@ def decider(automata, inputs):
     
     cur_state = start_state
     for i in range(len(inputs)):
-        if cur_state in automata:
+        if cur_state in automata: 
             cur_state = automata[cur_state][inputs[i]]
-        elif (cur_state + 'F') in automata:
-            cur_state = automata[(cur_state + 'F')][inputs[i]]
-        #print(cur_state)
+        elif str(cur_state) in automata:
+            cur_state = automata[str(cur_state)][inputs[i]]
+        elif (str(cur_state) + 'F') in automata:
+            cur_state = automata[(str(cur_state) + 'F')][inputs[i]]
 
-
-    if (cur_state + 'F') in automata or (cur_state + 'IF') in automata:
+    if (str(cur_state) + 'F') in automata or (str(cur_state) + 'IF') in automata:
         print("Yes Satisfies")
     else:
         print("No does not satisifes")
 
 number_of_variables = int(sys.argv[2])
 
-print("First Argument is",sys.argv[1])
+print("Given formula is ",sys.argv[1])
 
 root = Node()
 parse_input(sys.argv[1], root)
@@ -724,8 +646,6 @@ for i in range(number_of_variables):
 
     variable_values_binary_rev.append(bina)
 
-print(variable_values_binary_rev)
-#print(root.automata)
 
 inputs = []
 
@@ -734,6 +654,5 @@ for i in range(input_size):
     for j in range(number_of_variables):
         ip.append(variable_values_binary_rev[j][i])
     inputs.append("".join(ip))
-print(inputs)
 
 decider(root.automata, inputs)
