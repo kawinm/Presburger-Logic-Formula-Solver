@@ -3,7 +3,7 @@
 # Input:
 The program supports taking input from command line. 
 
-(Or) The inputs can be directly given as values to the variables: z3_formula = Z3 formula as a string
+(OR) The inputs can be directly given as values to the variables: z3_formula = Z3 formula as a string
 number_of_variables = Number of x_i in the given z3 formula
 variables_values[]  = (i-1)th position in this array gives the coefficient of x_i 
 
