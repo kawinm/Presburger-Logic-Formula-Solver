@@ -66,7 +66,7 @@ class Node:
             print()
             print(root.full_form)
             print() 
-            self.variables = root.left_child.variables[:]
+            root.variables = root.left_child.variables[:]
             root.coeff = root.left_child.coeff[:]
 
             for i in range(len(root.variables)):
