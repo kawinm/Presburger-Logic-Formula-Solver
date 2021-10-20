@@ -10,6 +10,8 @@ variables_values[]  = (i-1)th position in this array gives the coefficient of x_
 It is assumed that z3 formula does not have any space. Also, coefficient for any variable x_i in the z3 formula is given in the form c*x_i.
 Also, it is assumed that there are no extra enclosing brackets around the formula.
 
+It is assumed that all the variables x_1, x_2...x_n are present in the givn z3 forumula.
+
 # Output:
 Gives the transition table for the automata constructed in each step of the inductive procedure. Atlast, decides whether the given input satifies the given formula or not.
 
