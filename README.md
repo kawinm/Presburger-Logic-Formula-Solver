@@ -1,4 +1,4 @@
-# kawinm_ATC_2021_Assignment
+# Presburger Logic Formula Solver
 
 # Input:
 The program supports taking input from command line. 
